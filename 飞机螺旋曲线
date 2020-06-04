@@ -1,0 +1,135 @@
+#include<iostream>
+#include<vector>
+#include <iomanip>
+#include<cmath>
+using namespace std;
+vector<double>::iterator it;
+int operator /(int c, vector<double>a)
+{
+	c = c / a;
+	return c;
+}
+int operator *(int c, vector<double>a)
+{
+	c = c * a;
+	return c;
+}
+void hvalue(vector<double>& h, double x[])//h(n)=h(n+1)-h(n)
+{
+	int i = 0;
+	for (; i < 18; i++)//计算18次
+	{
+		h[i] = x[i + 1] - x[i];
+	}
+	cout << "\n";
+	return;//将h的值返回
+}
+void λvalue(vector<double>& λ, vector<double>h)//λ(n)=h(n)/(h(n)+h(n+1))
+{
+	int i = 0;
+	λ[0] = 1;
+	for (i = 1; i < 18; i++)
+	{
+		λ[i] = h[i] / (h[i - 1] + h[i]);
+	}
+	cout << "\n";
+	return;
+
+}
+void uvalue(vector<double>& u, vector<double>λ)//u(n)=1-λ(n);
+{
+	int i = 1;
+	for (; i < 18; i++)
+	{
+		u[i] = 1 - λ[i];
+	}
+	u[18] = 1;
+	cout << "\n";
+	return;
+
+}
+void mvalue(int n, vector<double>λ, vector<double>u, vector<double>& m, vector<double>c) //追赶法求M的值
+{
+	double u1[100], l[100], y[100];
+	u1[0] = 2;//u1=2
+	y[0] = c[0];//y1=c1
+	for (int j = 1; j < 19; j++)
+	{
+		l[j] = u[j] / u1[j - 1];//ln=an/un
+		u1[j] = 2 - l[j] * λ[j - 1];
+		y[j] = c[j] - l[j] * y[j - 1];
+	}
+	m[18] = y[18] / u1[18];
+	for (int j = 17; j >= 0; j--)
+		m[j] = (y[j] - λ[j] * m[j + 1]) / u1[j];
+}
+double svalue(double x1,int i ,double x[],double y[],vector<double>m,vector<double>h)
+{
+	return (pow(x1 - x[i], 3)) / double(6 * h[i]) * m[i + 1] - (pow(x1 - x[i+ 1], 3) / (6 * h[i]) * m[i]) + (y[i + 1] - h[i] * h[i] * m[i + 1] / 6) * (x1 - x[i]) / h[i] - (y[i] - h[i] * h[i] * m[i] / 6) * (x1 - x[i + 1]) / h[i];
+}
+int main()
+{
+	double x[] = { 0.520,3.1,8.0,17.95,28.65,39.62,50.65,78,104.6,156.6,208.6,260.7,312.5,364.4,416.3,468,494,507,520 };//输入所有x值
+	int xcount = sizeof(x) / 8;//x值的数量，double占用8位
+	double y[] = { 5.288,9.4,13.84,20.20,24.90,28.44,31.10,35,36.9,36.6,34.6,31.0,26.34,20.9,14.8,7.8,3.7,1.5,0.2 };//输入所有的y值
+	int ycount = sizeof(y) / 8;
+	vector<double>h(18, 0);//定义h数组将其初值都设置为0
+	hvalue(h, x);//计算h的值
+	int count;
+	count = 0;
+	for (it = h.begin(); it != h.end(); ++it)
+	{
+		cout <<"h"<<count << "=" << *it << "\t";
+		count++;
+	}
+	vector<double>λ(18, 0);//定义λ全为0
+	λvalue(λ, h);
+	count = 0;
+	for (it = λ.begin(); it != λ.end(); ++it)
+	{
+		cout << "λ" <<count<<"="<< *it << "\t";
+		count++;
+	}
+	vector<double>u(19, 0);//定义u全为0
+	uvalue(u, λ);
+	count = 0;
+	for (it = u.begin(); it != u.end(); ++it)
+	{
+		cout <<"u"<<count << "=" << *it << "\t";
+		count++;
+	}
+	vector<double>c(19, 0);//求出c的值
+	cout << "\n";
+	int i = 0;
+	c[i] = 6 * (-1.86548 + (y[i + 1] - y[i]) / h[i]) / h[i];//第一项
+	for (i = 1; i < 18; i++)//中间项
+	{
+		c[i] = (6 / (h[i] + h[i - 1])) * ((y[i + 1] - y[i]) / h[i] - (y[i] - y[i - 1]) / h[i - 1]);
+	}
+	c[18] = 6 * (-0.046115 - (y[18] - y[17]) / h[17]) / h[17];//最后一项
+	for (it = c.begin(); it != c.end(); ++it)
+	{
+		cout << fixed << setprecision(9) << *it << endl;//取九位有效数字
+	}
+	vector<double>m(19, 0);
+	cout << "\n";
+	mvalue(18, λ, u, m, c);
+	count = 0;
+	for (it = m.begin(); it != m.end(); ++it)
+	{
+		cout <<"m"<<count<<"="<< fixed << setprecision(9) << *it << endl;//取九位有效数字
+		count++;
+	}
+	double qiu[] = { 2.30,130,350,515 };
+	vector<double>s(4, 0);
+	s[0]=svalue(2.30, 0,x,y,m,h);//三次样条公式
+	s[1] = svalue(130, 8, x, y, m, h);
+	s[2] = svalue(350, 12, x, y, m, h);
+	s[3] = svalue(515, 17, x, y, m, h);
+	count = 0;
+	for (it = s.begin(); it != s.end(); ++it)
+	{
+		cout << "\n" <<"s("<<qiu[count]<<"):"<< fixed << setprecision(9) << *it << endl;//取九位有效数字
+		count++;
+	}
+}
